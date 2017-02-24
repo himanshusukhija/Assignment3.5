@@ -1,0 +1,68 @@
+1. Explain what is High availability of Namenode
+2. Explain what is check pointing and how it is useful
+3. Explain what is HDFS federation
+4. What are the configuration files that are to be edited for sure while installing a hadoop cluster
+Answer
+
+1. Before hadoop 2.x namenode has a single point of failure which means that if namenode of any cluster went down then the whole cluster would become
+useless which led to a great loss of productivity until the NameNode was either restarted or brought up on a separate machine.
+So high Availability is implemented in 2.x as following
+Automated Failover: HDP pro-actively detects NameNode host and process failures and will automatically switch to the standby NameNode
+to maintain availability for the HDFS service. There is no need for human intervention in the process – System Administrators can sleep 
+in peace!
+
+Hot Standby: Both Active and Standby NameNodes have up to date HDFS metadata, ensuring seamless failover even for large clusters – which 
+means no downtime for your HDP cluster!
+
+Full Stack Resiliency: The entire HDP stack (MapReduce, Hive, Pig, HBase, Oozie) has been certified to handle a NameNode failure scenario
+without losing data or the job progress. This is vital to ensure long running jobs that are critical to complete on schedule will not be
+adversely affected during a NameNode failure scenario.
+
+2.HDFS metadata can be thought of consisting of two parts: the base filesystem table (stored in a file called fsimage) and the edit
+log which lists changes made to the base table (stored in a file called edits). Checkpointing is a process of reconciling fsimage with 
+edits to produce a new version of fsimage. There are two benefits arising out of this: a more recent version of fsimage, and a truncated 
+edit log.
+
+fs.checkpoint.period controls how often this reconciliation will be triggered.  3600 means that every hour fsimage will be updated and 
+edit log truncated. Checkpiont is not cheap, so there is a balance between running it too often and letting the edit log grow too large.
+This parameter should be set to get a good balance assuming typical filesystem use in your cluster.
+
+fs.checkpoint.size is a size threshold, which, if reached by edits, will trigger an immediate checkpoint regardless of time elapsed 
+since the last checkpoint. This is insurance from edit log getting too large under unusually heavy write traffic to the filesystem 
+metadata.
+
+3.Hadoop federation allows scaling the name service horizontally. It uses several namenodes or namespaces which are independent of each 
+other. These independent namenodes are federated i.e. they don’t require inter coordination. These datanodes are used as common storage 
+by all the namenodes. Each datanode is registered with all the namenodes in the cluster. These datanodes send periodic reports and 
+responds to the commands from the name nodes. We have a block pool which is a set of blocks that belong to a single namespace.
+In a cluster, the datanodes stores blocks for all the block pools. Each block pool is managed independently. This enables the name 
+space to generate block ids for new blocks without informing other namespaces. If one namenode fails for any reason, the datanode keeps 
+on serving from other namenodes.
+
+One namespace and its block are collectively called Namespace Volume. When a namespace or a namenode is deleted the corresponding 
+block pool at the datanode is deleted automatically. In the process of cluster up-gradation, each namespace volume is upgraded as a
+unit.
+
+4.Configuration Files
+Hadoop configuration is driven by two types of important configuration files:
+Read-only default configuration - src/core/core-default.xml, src/hdfs/hdfs-default.xml and src/mapred/mapred-default.xml.
+Site-specific configuration - conf/core-site.xml, conf/hdfs-site.xml and conf/mapred-site.xml.
+To learn more about how the Hadoop framework is controlled by these configuration files, look here.
+
+Additionally, you can control the Hadoop scripts found in the bin/ directory of the distribution, by setting site-specific values
+via the conf/hadoop-env.sh.
+
+Site Configuration
+To configure the Hadoop cluster you will need to configure the environment in which the Hadoop daemons execute as well as the 
+configuration parameters for the Hadoop daemons.
+
+The Hadoop daemons are NameNode/DataNode and JobTracker/TaskTracker.
+
+Configuring the Environment of the Hadoop Daemons
+Administrators should use the conf/hadoop-env.sh script to do site-specific customization of the Hadoop daemons' process environment.
+
+At the very least you should specify the JAVA_HOME so that it is correctly defined on each remote node.
+
+In most cases you should also specify HADOOP_PID_DIR to point a directory that can only be written to by the users that are going 
+to run the hadoop daemons. Otherwise there is the potential for a symlink attack.
+
