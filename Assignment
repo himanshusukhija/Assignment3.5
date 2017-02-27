@@ -31,6 +31,18 @@ fs.checkpoint.size is a size threshold, which, if reached by edits, will trigger
 since the last checkpoint. This is insurance from edit log getting too large under unusually heavy write traffic to the filesystem 
 metadata.
 
+Checkpointing services for a Hadoop cluster are handled by one of four possible daemons, which need to run on their own dedicated
+master node alongside the NameNode daemon’s master node:
+•	Secondary NameNode
+•	Checkpoint Node
+•	Backup Node
+•	Standby NameNode
+
+When it’s time to perform the checkpoint, the NameNode creates a new file to accept the journaled file system changes. It names
+the new file. As a result, the file accepts no further changes and is copied to the checkpointing service, along with the file.
+The checkpointing service merges these two files, creating a file named.The checkpointing service copies the file to the NameNode.
+It overwrites the file and renames is too.
+
 3.Hadoop federation allows scaling the name service horizontally. It uses several namenodes or namespaces which are independent of each 
 other. These independent namenodes are federated i.e. they don’t require inter coordination. These datanodes are used as common storage 
 by all the namenodes. Each datanode is registered with all the namenodes in the cluster. These datanodes send periodic reports and 
@@ -66,3 +78,8 @@ At the very least you should specify the JAVA_HOME so that it is correctly defin
 In most cases you should also specify HADOOP_PID_DIR to point a directory that can only be written to by the users that are going 
 to run the hadoop daemons. Otherwise there is the potential for a symlink attack.
 
+The configuration files that we need to edit for a single node cluster are-
+Core-site.xml
+HDFS-site.xml
+YARN-site.xml
+Xml
